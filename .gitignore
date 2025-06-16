@@ -1,0 +1,59 @@
+# === PYTHON FILES ===
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+.eggs/
+
+# === DATA FILES ===
+*.csv
+*.xlsx
+*.xls
+*.json
+*.db
+*.sqlite3
+*.parquet
+*.h5
+*.log
+*.zip
+
+# === NOTEBOOKS CACHE ===
+.ipynb_checkpoints/
+
+# === ENVIRONMENTS ===
+.env
+.venv/
+venv/
+ENV/
+env/
+Pipfile.lock
+poetry.lock
+
+# === IDE FILES ===
+.vscode/
+.idea/
+*.sublime-workspace
+*.sublime-project
+
+# === OS SYSTEM FILES ===
+.DS_Store
+Thumbs.db
+
+# === MODEL ARTIFACTS ===
+*.pkl
+*.joblib
+*.h5
+*.sav
+
+# === SECRETS / TOKENS ===
+credentials/
+apikeys.json
+token.json
+secrets.env
+*.pem
+*.key
