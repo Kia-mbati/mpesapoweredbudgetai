@@ -7,12 +7,61 @@ import seaborn as sns
 from sklearn.metrics import silhouette_score
 from sklearn.preprocessing import LabelEncoder
 import streamlit as st
-from MPESAPOWEREDBUDGETAI.timing import time_category_insights_ui
 import google.generativeai as genai
 import os
 import io
 from fpdf import FPDF
 import base64
+from time_category_insights import time_category_insights_ui
+
+
+
+
+
+
+# --- Ensure prompts dict is initialized and contains all required keys at the top ---
+if 'prompts' not in globals():
+    prompts = {}
+if "budget_creation" not in prompts:
+    prompts["budget_creation"] = '''
+You are a financial budget assistant. Create a personalized budget based on the user's spending history and financial goals.
+
+Instructions:
+- Analyze the historical spending patterns across categories
+- Consider seasonal variations and spending clusters
+- Create a realistic budget that helps achieve the user's financial goals
+- Provide explanations for your recommendations
+- Suggest specific areas where spending can be reduced based on patterns
+- Include both fixed expenses and discretionary spending
+- Format the budget in a clear, structured way
+- Return the budget as a JSON array of objects, each with: category, allocation, type (fixed/discretionary), and a short note. Example:
+[
+  {{"category": "Rent", "allocation": 20000, "type": "fixed", "note": "Based on your past rent payments."}},
+  {{"category": "Groceries", "allocation": 8000, "type": "discretionary", "note": "Average monthly grocery spend."}}
+]
+- After the JSON, provide a brief summary and recommendations.
+
+User's spending history:
+{category_spending_data}
+
+Spending patterns by time:
+{temporal_patterns}
+
+Cluster information:
+{cluster_summary}
+
+Recent transactions:
+{recent_activity}
+
+User's financial goals: {goals}
+User's income (if provided): {income}
+Budget timeframe: {timeframe}
+
+Create a detailed, personalized budget with specific allocation amounts for each category.
+'''
+
+
+
 
 
 #PART B
@@ -24,6 +73,13 @@ xlsx_file = st.sidebar.file_uploader("Upload XLSX Statement", type=["xlsx"])
 if xlsx_file is None:
     st.warning("You must upload an M-PESA XLSX statement to use this dashboard.")
     st.stop()
+
+
+
+
+
+
+
 
 
 
@@ -61,7 +117,6 @@ def categorize_details(details):
 
 
 
-
 #PART D
 # Load data
 @st.cache_data
@@ -90,6 +145,11 @@ def load_data(xlsx_file=None):
     else:
         # Fallback to data.csv
         df = pd.read_csv('data.csv')
+
+
+
+
+        
     df['Details'] = df['Details'].fillna('Other')
     df['Paid In'] = df['Paid In'].fillna(0)
     df['Withdrawn'] = df['Withdrawn'].fillna(0)
@@ -101,6 +161,10 @@ def load_data(xlsx_file=None):
     df['Month'] = pd.to_datetime(df['Completion Time']).dt.month
     df['Amount'] = df['Paid In'] - df['Withdrawn']
     return df
+
+
+
+
 
 df = load_data(xlsx_file)
 if df is None:
@@ -164,12 +228,11 @@ df_clean['purpose_cluster'] = kmeans.fit_predict(clustering_data)
 
 
 from sklearn.metrics import silhouette_score
-
-labels = kmeans.predict(clustering_data)
-silhouette_avg = silhouette_score(clustering_data, labels)
+X_scaled = clustering_data.values  # Use the scaled data for silhouette score calculation
+labels = kmeans.predict(X_scaled)
+silhouette_avg = silhouette_score(X_scaled, labels)
 st.subheader("Silhouette Score")
 st.write(f'Silhouette Score: {silhouette_avg}')
-
 
 
 cluster_summary = df_clean.groupby('purpose_cluster').agg(
@@ -220,6 +283,28 @@ st.subheader("Cluster Summary Table")
 st.dataframe(cluster_summary)
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 #PART F
 # Bar chart of Hour of the Day vs Total Amount Spent
 st.subheader("Total Amount Spent by Hour of the Day")
@@ -262,13 +347,28 @@ ax2.set_xticklabels(ax2.get_xticklabels(), rotation=45, ha='right')
 plt.tight_layout()
 st.pyplot(fig2)
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 time_category_insights_ui(df_clean)
 
 
 
 # --- PART G: Conversational Interface (Gemini, Interactive, with Graph Data) ---
 # You may want to set your API key securely in production
-api_key =  "AIzaSyDetbboTdCwlmPFO9iJr02DPAURDdZsJ1E"
+api_key =  ""
 genai.configure(api_key=api_key)
 
 # --- Enrich Gemini's data bank: Add sample rows from each cluster ---
@@ -618,7 +718,3 @@ with st.expander("📝 Budget Creation Assistant", expanded=True):
 
 
  # type: ignore
-
-
-
-
